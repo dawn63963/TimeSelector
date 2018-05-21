@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>酒店订房之时间选择器</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			color: #333;
+			box-sizing: border-box;
+		}
+		.wrap {
+			margin: 15px;
+			padding: 15px;
+			border:  yellowgreen 1px dashed;
+		}
+		.box {
+			width: 500px;
+			margin: 15px;
+			padding: 15px;
+			border:  skyblue 1px dashed;
+		}
+		.box-h,.box-ctn {
+			width: 100%;
+			margin-bottom: 30px;
+			padding: 20px;
+			border-bottom: #f6f6f6 1px solid;
+		}
+		.boxH-left, .boxH-right {
+			display: inline-block;
+			width: 49%;
+			text-align: center;
+		}
+		.box-ctn {
+			border: #f6f6f6 1px solid;
+			box-shadow: 0 2px 6px #f6f6f6;
+		}
+		.boxC-h {
+			padding: 0 0 15px;
+		}
+		.box-ctn select,.boxC-h span {
+			display: inline-block;
+			width: 30%;
+			text-align: center;
+		}
+		.boxC-ctn {
+			display: flex;
+			justify-content: space-around;
+			height: 30px;
+			line-height: 30px;
+		}
+		.boxC-ctn select {
+			height: 30px;
+			line-height: 30px;
+		}
+	</style>
+</head>
+<body>
+	<!-- 要求：根据现在的时间去判断可以预约房子的时间段和能预约几小时 -->
+	<!--       1、按小时休息的预约：预约时间从每天 12:00 开始到 19:00 结束，在每天19:00 后不再接受当天的按小时休息的预约。在添加一个“住宿”，为要住宿旅客提供选择-->
+	<!--       2、按小时休息的预约：预约时间会以半小时为单位，从12:00 开始，如 12:00 、12:30 、13:00、13:30 等等 -->
+	<!--       3、按小时休息的预约：预约时长以半小时为增加量，最低预约时长为 1小时 如 1h、1.5h、2h、2.5h 等等 连续递增半小时最大是8h到晚上20:00。再添一个“住宿”关键字，为从当天12:00以后预约的到 明天 12:00离开 的“住宿”情况  -->
+	<!--       4、只接受今明两天提出来的住宿预约 -->
+
+	<div class="wrap">
+		<div class="box">
+			<div class="box-h">
+				<div class="boxH-left">
+					<h4>Entry time</h4>
+					<p class="boxL-t">12:00</p>
+					<p class="boxL-d">今日</p>
+				</div>
+				<div class="boxH-right">
+					<h4>departure time</h4>
+					<p class="boxR-t">14:00</p>
+					<p class="boxR-d">明日</p>
+				</div>
+			</div>
+			<div class="box-ctn">
+				<div class="boxC-h">
+					<span>日期</span>
+					<span>起始时间</span>
+					<span>时长</span>
+				</div>
+				<div class="boxC-ctn">
+					<select name="" id="dates">
+						<!-- <option value="今天">今天</option>
+						<option value="明天">明天</option>
+						<option value="住宿">住宿</option> -->
+					</select>
+					<select name="" id="times">
+					</select>
+					<select name="" id="duration">
+					</select>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		const date = new Date();
+		let now_H = date.getHours(); //获取当前时间的小时字段
+		let now_M = date.getMinutes(); //获取当前时间的分钟字段
+		let now = now_H + ":" + now_M; //获取当前时间 小时+分钟
+		const dates = ["今日", "明日", "住宿"]; //日期数组
+		var times = ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00"]; //起始时间数组
+		var duration = ["1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8"]; //时长数组
+		let s_dates = document.querySelector("#dates"); //日期选择器
+		let s_times = document.querySelector("#times"); //起始时间选择器
+		let s_duration = document.querySelector("#duration"); //时长选择器
+		let E_time = document.querySelector(".boxL-t"); //入住时间
+		let E_day = document.querySelector(".boxL-d"); //入住日期
+		let Q_time = document.querySelector(".boxR-t"); //离开时间
+		let Q_day = document.querySelector(".boxR-d"); //离开日期
+
+		// 添加 日期 元素函数
+		function add_dates(goal, arr) {
+			arr.filter(function( e ) {
+				if( now > "19:00" && e === "今日"){
+					// 不做任何添加
+				}else {
+					let opt = document.createElement("option");
+					let node = document.createTextNode(e);
+					opt.appendChild(node);
+					goal.appendChild(opt);
+				};
+			});
+		};
+
+		// 添加 起始时间 元素函数
+		function add_times(goal, arr) {
+			arr.filter(function( e ) {
+				let opt = document.createElement("option");
+				let node = document.createTextNode(e);
+				opt.appendChild(node);
+				goal.appendChild(opt);
+			});
+		};
+
+		// 添加 当天起始时间 元素函数
+		function add_now_times(goal, arr) {
+			arr.filter(function( e ) {
+				if( e >= now ){
+					let opt = document.createElement("option");
+					let node = document.createTextNode(e);
+					opt.appendChild(node);
+					goal.appendChild(opt);
+				};
+			});
+		};
+
+		// 添加 时长 元素函数
+		function add_duration(goal, arr) {
+			arr.filter(function( e ) {
+				let opt = document.createElement("option");
+				let node = document.createTextNode(e);
+				opt.appendChild(node);
+				goal.appendChild(opt);
+			});
+		};
+
+		// 添加 当前可用时长 元素函数
+		function add_now_duration(goal, arr) {
+			arr.filter(function( e ) {
+				let d_nums = parseInt(now_H*60) + parseFloat(now_M) + parseFloat(e*60);
+				if( !(d_nums > 1200) ) {
+					let opt = document.createElement("option");
+					let node = document.createTextNode(e);
+					opt.appendChild(node);
+					goal.appendChild(opt);
+				};
+			});
+		};
+
+		// 添加 选择起始时间后可用时长 元素函数
+		function add_s_duration(goal, arr, n) {
+			arr.filter(function( e ) {
+				let d_nums = parseInt(n) + parseFloat(e*60);
+				if( !(d_nums > 1200) ) {
+					let opt = document.createElement("option");
+					let node = document.createTextNode(e);
+					opt.appendChild(node);
+					goal.appendChild(opt);
+				};
+			});
+		};
+
+		// 清空所有元素
+		function clearElem(el) {
+			while (el.firstChild) {
+				//The list is LIVE so it will re-index each call
+				el.removeChild(el.firstChild);
+			}
+		};
+
+		//获取当前时间，格式YYYY-MM-DD  在这里没用上O(∩_∩)O哈哈~~~~~
+		function getNowFormatDate() {
+			let date = new Date();
+			let seperator1 = "-";
+			let year = date.getFullYear();
+			let month = date.getMonth() + 1;
+			let strDate = date.getDate();
+			if (month >= 1 && month <= 9) {
+				month = "0" + month;
+			}
+			if (strDate >= 0 && strDate <= 9) {
+				strDate = "0" + strDate;
+			}
+			var currentdate = year + seperator1 + month + seperator1 + strDate;
+			// console.log(currentdate);
+			return currentdate;
+		};
+
+
+		window.onload = function() {
+			// getNowFormatDate();
+			add_dates(s_dates, dates);
+			add_now_times(s_times, times);
+			add_now_duration(s_duration, duration);
+
+			s_dates.addEventListener("change", function(){
+				if(s_dates.value == "住宿") {
+					clearElem(s_times);
+					clearElem(s_duration);
+					times = duration = ["住宿"];
+					add_times(s_times, times);
+					add_duration(s_duration, duration);
+				}else if(s_dates.value == "明日") {
+					clearElem(s_times);
+					clearElem(s_duration);
+					times = ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00"]; //起始时间数组
+					duration = ["1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8"]; //时长数组
+					add_times(s_times, times);
+					add_duration(s_duration, duration);
+				}else {
+					clearElem(s_times);
+					clearElem(s_duration);
+					times = ["12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30", "18:00", "18:30", "19:00"]; //起始时间数组
+					duration = ["1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5", "5.5", "6", "6.5", "7", "7.5", "8"]; //时长数组
+					add_now_times(s_times, times);
+					add_now_duration(s_duration, duration);
+				}
+			});
+			s_times.addEventListener("change", function(){
+				let times_arr = s_times.value.split(":");
+				let varT = parseInt(times_arr[0]*60) + parseInt(times_arr[1]);
+				clearElem(s_duration);
+				add_s_duration(s_duration, duration, varT);
+			});
+
+		};
+
+
+	</script>
+</body>
+</html>
